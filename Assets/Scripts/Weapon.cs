@@ -4,12 +4,13 @@ public class Weapon : MonoBehaviour
 {
     [Header("Şarjör Ayarları")]
     public int maxAmmo = 50; // Şarjörün maksimum alabildiği mermi (güncellendi)
-    public int currentAmmo; // Anlık mermi sayısı
+    public int currentAmmo;
+    float timeToAddAmmo = 0;// Anlık mermi sayısı
 
     [Header("Ateşleme Ayarları")]
     [Tooltip("Saniyedeki atış sayısı (fireRate=5 -> her atış 0.2s)")]
     public float fireRate = 5f;
-    public float damagePerShot = 20f;
+    public float damagePerShot = 10f;
 
     [Header("Unstable Mekaniği")]
     [Tooltip("Şarjör tamamen boşken hassasiyet ne kadar artsın? 1 = Değişmez, 2 = 2 katına çıkar.")]
@@ -31,9 +32,19 @@ public class Weapon : MonoBehaviour
     public Renderer[] weaponRenderers;
     [Tooltip("Isınma renginin dolum ölçeği (1 = overheatThreshold'ta tam geçiş)" )]
     public float heatColorScale = 1.5f;
-    [Tooltip("Mermi tüpündeki sıvıyı temsil eden transform. Pivot alt tarafta olmalı ve Y ölçeği ile doluluk gösterilecek.")]
-    public Transform ammoLiquid;
+    [Tooltip("Şarjör BlendShape'lerini içeren SkinnedMeshRenderer")]
+    public SkinnedMeshRenderer ammoBlendShapeRenderer;
+    [Tooltip("BlendShape animasyonunun yumuşatma hızı")]
+    public float blendShapeSmoothSpeed = 5f;
 
+    [Header("Reload Ayarları")]
+    [Tooltip("Saniyede doldurulan mermi sayısı")]
+    public float reloadAmmoPerSecond = 10f;
+    [Tooltip("Reload sırasında silahın ineceği Y pozisyonu (local)")]
+    public float reloadLowerYPosition = -0.6f;
+    [Tooltip("Silahın yukarı/aşağı hareket hızı")]
+    public float weaponLowerSpeed = 8f;
+    
     // Özel durum değişkenleri
     private float fireCooldown = 0f;
     private float continuousFireTime = 0f;
@@ -41,14 +52,32 @@ public class Weapon : MonoBehaviour
 
     private PlayerHealth playerHealth;
     private Camera mainCamera;
+    
+    // BlendShape hedef ve mevcut değerler
+    private float _targetBittiBlend = 0f;
+    private float _currentBittiBlend = 0f;
+    private float _targetKey2Blend = 0f;
+    private float _currentKey2Blend = 0f;
+
+    // Reload durumu
+    private bool _isReloading = false;
+    private Vector3 _weaponOriginalLocalPosition;
+    private float _targetWeaponYPosition;
+    private float _currentWeaponYPosition;
 
     void Start()
     {
         // Oyuna dolu şarjörle başla
-        Reload();
+        currentAmmo = maxAmmo;
+        CalculateAmmoBlendShapeTargets();
 
         // Kamera referansını önbelleğe al
         mainCamera = Camera.main;
+
+        // Silahın başlangıç pozisyonunu kaydet
+        _weaponOriginalLocalPosition = transform.localPosition;
+        _currentWeaponYPosition = _weaponOriginalLocalPosition.y;
+        _targetWeaponYPosition = _weaponOriginalLocalPosition.y;
 
          // Eğer LineRenderer sahneye eklenmemişse bileşen eklemeye çalış
          if (laserLine == null)
@@ -80,71 +109,124 @@ public class Weapon : MonoBehaviour
     {
         // Sürekli basılı tutma ile ateşleme
         bool isHoldingFire = Input.GetButton("Fire1");
+        bool isHoldingReload = Input.GetKey(KeyCode.R);
 
-        // Lazer görselini her frame güncelle (eğer tutuyorsak ve lazer açık)
-        if (isHoldingFire && laserLine != null)
+        // Reload mekanizması
+        if (isHoldingReload && currentAmmo < maxAmmo)
         {
-            UpdateLaserVisual();
-        }
-
-        // Aşırı ısınma zararını uygula (sadece threshold aşıldıktan sonra) -- continuousFireTime ile doğru orantılı
-        if (isHoldingFire && continuousFireTime > overheatThreshold)
-        {
-            if (playerHealth != null)
+            if (!_isReloading)
             {
-                float scale = continuousFireTime / overheatThreshold; // 1 = threshold, >1 daha fazla
-                float damageThisFrame = overheatDamagePerSecond * scale * Time.deltaTime;
-                playerHealth.TakeDamage(damageThisFrame);
+                // Reload başladı
+                _isReloading = true;
+                _targetWeaponYPosition = _weaponOriginalLocalPosition.y + reloadLowerYPosition;
+            }
+            
+            // 1/reloadAmmoPerSecond süre sonra 1 mermi doldur
+            if (currentAmmo < maxAmmo)
+            {
+                if (timeToAddAmmo < 1 / reloadAmmoPerSecond)
+                    timeToAddAmmo += Time.deltaTime;
+                else
+                {
+                    currentAmmo += 1;
+                    timeToAddAmmo = 0f; 
+                }
+            }
+            CalculateAmmoBlendShapeTargets();
+        }
+        else
+        {
+            if (_isReloading)
+            {
+                // Reload bitti, silahı kaldır
+                _isReloading = false;
+                _targetWeaponYPosition = _weaponOriginalLocalPosition.y;
             }
         }
+        
+        // Silahın yukarı/aşağı animasyonunu güncelle
+        _currentWeaponYPosition = Mathf.Lerp(_currentWeaponYPosition, _targetWeaponYPosition, Time.deltaTime * weaponLowerSpeed);
+        Vector3 newPos = transform.localPosition;
+        newPos.y = _currentWeaponYPosition;
+        transform.localPosition = newPos;
 
-        // Ateşleme mantığı: artık overheat olsa bile ateş etmeye izin veriyoruz
-        if (isHoldingFire && currentAmmo > 0)
+        // Reload sırasında silahı kullanamayız
+        if (!_isReloading)
         {
-            // Lazer görünür hale getir
-            if (laserLine != null) laserLine.enabled = true;
-
-            // Sürekli ateş zamanını arttır (açık ateş bittikten sonra soğuyacak)
-            continuousFireTime += Time.deltaTime;
-
-            // Ateş hızı kontrolü
-            fireCooldown -= Time.deltaTime;
-            if (fireCooldown <= 0f)
+            // Lazer görselini her frame güncelle (eğer tutuyorsak ve lazer açık)
+            if (isHoldingFire && laserLine != null)
             {
-                Shoot();
-                fireCooldown = 1f / fireRate;
+                UpdateLaserVisual();
             }
 
-            // Aşırı ısınma flag'i sadece bilgi amaçlı
-            if (continuousFireTime > overheatThreshold)
+            // Aşırı ısınma zararını uygula (sadece threshold aşıldıktan sonra) -- continuousFireTime ile doğru orantılı
+            if (isHoldingFire && continuousFireTime > overheatThreshold)
             {
-                isOverheated = true;
+                if (playerHealth != null)
+                {
+                    // Overheat hasarı continuousFireTime ile üstel olarak artar
+                    float overheatRatio = (continuousFireTime - overheatThreshold) / overheatThreshold;
+                    float damageMultiplier = 1f + (overheatRatio * overheatRatio * 2f); // Üstel artış
+                    float damageThisFrame = overheatDamagePerSecond * damageMultiplier * Time.deltaTime;
+                    playerHealth.TakeDamage(damageThisFrame);
+                }
+            }
+
+            // Ateşleme mantığı: artık overheat olsa bile ateş etmeye izin veriyoruz
+            if (isHoldingFire && currentAmmo > 0)
+            {
+                // Lazer görünür hale getir
+                if (laserLine != null) laserLine.enabled = true;
+
+                // Sürekli ateş zamanını arttır (açık ateş bittikten sonra soğuyacak)
+                continuousFireTime += Time.deltaTime;
+
+                // Ateş hızı kontrolü
+                fireCooldown -= Time.deltaTime;
+                if (fireCooldown <= 0f)
+                {
+                    Shoot();
+                    fireCooldown = 1f / fireRate;
+                }
+
+                // Aşırı ısınma flag'i sadece bilgi amaçlı
+                if (continuousFireTime > overheatThreshold)
+                {
+                    isOverheated = true;
+                }
+            }
+            else
+            {
+                // Lazer kapat
+                if (laserLine != null) laserLine.enabled = false;
+
+                // Tutma durduğunda sürekli ateş zamanını düşür (soğuma)
+                continuousFireTime = Mathf.Max(0f, continuousFireTime - Time.deltaTime);
+
+                // Soğuduktan sonra aşırı ısınma durumunu kaldır
+                if (continuousFireTime < overheatThreshold)
+                {
+                    isOverheated = false;
+                }
             }
         }
         else
         {
-            // Lazer kapat
+            // Reload sırasında lazer kapalı
             if (laserLine != null) laserLine.enabled = false;
-
-            // Tutma durduğunda sürekli ateş zamanını düşür (soğuma)
+            
+            // Soğuma devam etsin reload sırasında
             continuousFireTime = Mathf.Max(0f, continuousFireTime - Time.deltaTime);
-
-            // Soğuduktan sonra aşırı ısınma durumunu kaldır
             if (continuousFireTime < overheatThreshold)
             {
                 isOverheated = false;
             }
         }
 
-        // Manual reload
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            Reload();
-        }
-
         // Isınma ve mermi tüpü görsellerini güncelle
         UpdateWeaponHeatVisual();
-        UpdateAmmoVisual();
+        UpdateAmmoBlendShapes();
+        UpdateLaserColor();
     }
 
     void Shoot()
@@ -186,8 +268,8 @@ public class Weapon : MonoBehaviour
             laserLine.SetPosition(1, endPoint);
         }
 
-        // Ateş sonrası görsel güncelle (anlık)
-        UpdateAmmoVisual();
+        // Ateş sonrası BlendShape hedeflerini güncelle
+        CalculateAmmoBlendShapeTargets();
     }
 
     // Silahın ısınma düzeyine göre renderer'ların rengini değiştirir.
@@ -246,21 +328,79 @@ public class Weapon : MonoBehaviour
         laserLine.SetPosition(1, endPoint);
     }
 
-    // Mermi tüpündeki sıvı seviyesini güncelle (ammoLiquid varsayılan pivot alt tarafta olmalı)
-    void UpdateAmmoVisual()
+    // BlendShape hedef değerlerini mermi miktarına göre hesapla
+    void CalculateAmmoBlendShapeTargets()
     {
-        if (ammoLiquid == null) return;
-        float fill = (maxAmmo > 0) ? (float)currentAmmo / maxAmmo : 0f;
-        Vector3 localScale = ammoLiquid.localScale;
-        localScale.y = Mathf.Clamp01(fill);
-        ammoLiquid.localScale = localScale;
+        if (maxAmmo <= 0) return;
+        
+        float fillPercentage = (float)currentAmmo / maxAmmo * 100f; // 0-100 arası
+        
+        // Faz 1: %100'den %15'e kadar -> "bitti" 0'dan 100'e
+        // Faz 2: %15'ten %0'a kadar -> "bitti" 40'a, "Key 2" 80'e
+        
+        if (fillPercentage >= 15f)
+        {
+            // Faz 1: 100% -> 15%
+            // bitti: 0 -> 100
+            float phase1Progress = Mathf.InverseLerp(100f, 15f, fillPercentage); // 0 to 1
+            _targetBittiBlend = Mathf.Lerp(0f, 100f, phase1Progress);
+            _targetKey2Blend = 0f;
+        }
+        else
+        {
+            // Faz 2: 15% -> 0%
+            // bitti: 100 -> 40
+            // Key 2: 0 -> 80
+            float phase2Progress = Mathf.InverseLerp(15f, 0f, fillPercentage); // 0 to 1
+            _targetBittiBlend = Mathf.Lerp(100f, 40f, phase2Progress);
+            _targetKey2Blend = Mathf.Lerp(0f, 80f, phase2Progress);
+        }
+    }
+    
+    // BlendShape'leri yumuşatılmış şekilde güncelle
+    void UpdateAmmoBlendShapes()
+    {
+        if (ammoBlendShapeRenderer == null) return;
+        
+        // Yumuşatılmış geçiş
+        _currentBittiBlend = Mathf.Lerp(_currentBittiBlend, _targetBittiBlend, Time.deltaTime * blendShapeSmoothSpeed);
+        _currentKey2Blend = Mathf.Lerp(_currentKey2Blend, _targetKey2Blend, Time.deltaTime * blendShapeSmoothSpeed);
+        
+        // BlendShape'leri uygula
+        ammoBlendShapeRenderer.SetBlendShapeWeight(0, _currentBittiBlend); // "bitti" index 0 varsayımı
+        ammoBlendShapeRenderer.SetBlendShapeWeight(1, _currentKey2Blend);  // "Key 2" index 1 varsayımı
+    }
+    
+    // Lazer rengini overheat'e göre güncelle
+    void UpdateLaserColor()
+    {
+        if (laserLine == null) return;
+        
+        // Overheat oranına göre renk
+        float heatRatio = Mathf.Clamp01(continuousFireTime / (overheatThreshold * heatColorScale));
+        
+        Color laserColor;
+        if (heatRatio < 0.33f)
+        {
+            float t = heatRatio / 0.33f;
+            laserColor = Color.Lerp(new Color(0.3f, 0.7f, 1f), new Color(1f, 1f, 0.3f), t); // Mavi -> Sarı
+        }
+        else if (heatRatio < 0.66f)
+        {
+            float t = (heatRatio - 0.33f) / 0.33f;
+            laserColor = Color.Lerp(new Color(1f, 1f, 0.3f), new Color(1f, 0.3f, 0f), t); // Sarı -> Turuncu
+        }
+        else
+        {
+            float t = (heatRatio - 0.66f) / 0.34f;
+            laserColor = Color.Lerp(new Color(1f, 0.3f, 0f), new Color(1f, 0f, 0f), t); // Turuncu -> Kırmızı
+        }
+        
+        laserColor.a = 1f;
+        laserLine.startColor = laserColor;
+        laserLine.endColor = laserColor;
     }
 
-    void Reload()
-    {
-        currentAmmo = maxAmmo;
-        Debug.Log("Şarjör dolduruldu! Mermi: " + currentAmmo);
-    }
 
     // --- MEKANİĞİN EN ÖNEMLİ FONKSİYONU ---
     // Bu fonksiyon, mermi sayısına göre 1 ile maxSensitivityMultiplier arasında bir değer döndürür.

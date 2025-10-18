@@ -394,6 +394,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 99900058799386228, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.212
+      objectReference: {fileID: 0}
+    - target: {fileID: 2146712231845174440, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: reloadLowerYPosition
+      value: -0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2146712231845174440, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: ammoBlendShapeRenderer
+      value: 
+      objectReference: {fileID: 2063289414}
+    - target: {fileID: 2146712231845174440, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: maxSensitivityMultiplier
+      value: 21.1
+      objectReference: {fileID: 0}
     - target: {fileID: 2605459414961897170, guid: a8ea0e35465ea63479b87dad4df801f2,
         type: 3}
       propertyPath: m_Name
@@ -1574,6 +1594,12 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 6239881831769578202, guid: 4c368cc9eae4b274793711d356b3faa6, type: 3}
+--- !u!137 &2063289414 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1775036114562246270, guid: a8ea0e35465ea63479b87dad4df801f2,
+    type: 3}
+  m_PrefabInstance: {fileID: 442393564}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2123152654 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2800250516343163423, guid: 4c368cc9eae4b274793711d356b3faa6,

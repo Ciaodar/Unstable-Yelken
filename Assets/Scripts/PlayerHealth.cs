@@ -6,6 +6,8 @@ public class PlayerHealth : MonoBehaviour
 {
     public float maxHealth = 100f;
     private float currentHealth;
+    // Diğer scriptlerin oyuncunun mevcut canını okuyabilmesi için public readonly property
+    public float CurrentHealth { get { return currentHealth; } }
 
     [Header("Rejenere Ayarları")]
     [Tooltip("Hasar aldıktan sonra kaç saniye içinde yenilenmeye başlamaz")] public float regenDelay = 2f;

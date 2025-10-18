@@ -525,7 +525,7 @@ MonoBehaviour:
   currentAmmo: 0
   fireRate: 5
   damagePerShot: 20
-  maxSensitivityMultiplier: 2.5
+  maxSensitivityMultiplier: 21.1
   overheatThreshold: 3
   overheatDamagePerSecond: 10
   muzzleTransform: {fileID: 9160521898826724949}
@@ -536,7 +536,11 @@ MonoBehaviour:
   weaponRenderers:
   - {fileID: 1775036114562246270}
   heatColorScale: 1.5
-  ammoLiquid: {fileID: 0}
+  ammoBlendShapeRenderer: {fileID: 1775036114562246270}
+  blendShapeSmoothSpeed: 5
+  reloadAmmoPerSecond: 10
+  reloadLowerYPosition: -0.6
+  weaponLowerSpeed: 8
 --- !u!137 &1775036114562246270 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7040707184094433311, guid: 92cc58112fc1dc9439b70ca4a6f723b4,
