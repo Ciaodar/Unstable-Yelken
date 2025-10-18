@@ -2,6 +2,14 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
+    // === YENİ SES AYARLARI ===
+    [Header("Ses Ayarları")]
+    public AudioSource audioSource;
+    public AudioClip shootClip; // Ateş etme sesi
+    public AudioClip reloadStartClip; // Reload'a başlama sesi
+    public AudioClip reloadFinishClip; // Reload'u bitirme sesi (isteğe bağlı)
+    // ========================
+    
     [Header("Şarjör Ayarları")]
     public int maxAmmo = 50; // Şarjörün maksimum alabildiği mermi (güncellendi)
     public int currentAmmo;
@@ -79,6 +87,21 @@ public class Weapon : MonoBehaviour
         _currentWeaponYPosition = _weaponOriginalLocalPosition.y;
         _targetWeaponYPosition = _weaponOriginalLocalPosition.y;
 
+        // === SES KAYNAĞINI BULMA ===
+        if (audioSource == null)
+        {
+            // Bu script'in üzerinde AudioSource arar
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                // Bulamazsa yeni bir bileşen ekler
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+        // ==========================
+        if (laserLine != null) laserLine.enabled = false;
+        
+        
          // Eğer LineRenderer sahneye eklenmemişse bileşen eklemeye çalış
          if (laserLine == null)
          {
@@ -119,6 +142,17 @@ public class Weapon : MonoBehaviour
                 // Reload başladı
                 _isReloading = true;
                 _targetWeaponYPosition = _weaponOriginalLocalPosition.y + reloadLowerYPosition;
+                
+                // === RELOAD BAŞLANGIÇ SESİ: Önceki sesi durdur ve yeni sesi çal ===
+                if (audioSource != null && reloadStartClip != null)
+                {
+                    // Reload başladığında önceki sesi kes ve reload sesini çal
+                    audioSource.Stop();
+                    audioSource.clip = reloadStartClip;
+                    audioSource.loop = true; // Reload süresince ses çalsın
+                    audioSource.Play();
+                }
+                // =================================================================
             }
             
             // 1/reloadAmmoPerSecond süre sonra 1 mermi doldur
@@ -134,13 +168,24 @@ public class Weapon : MonoBehaviour
             }
             CalculateAmmoBlendShapeTargets();
         }
-        else
+        else // Reload tuşu bırakıldı VEYA mermi doldu
         {
             if (_isReloading)
             {
                 // Reload bitti, silahı kaldır
                 _isReloading = false;
                 _targetWeaponYPosition = _weaponOriginalLocalPosition.y;
+
+                // === RELOAD BİTİŞ SESİ: Reload sesini durdur, bitiş sesini çal ===
+                if (audioSource != null)
+                {
+                    audioSource.Stop(); // Devam eden reload sesini kes
+                    if (reloadFinishClip != null)
+                    {
+                        audioSource.PlayOneShot(reloadFinishClip);
+                    }
+                }
+                // ===============================================================
             }
         }
         
@@ -172,9 +217,27 @@ public class Weapon : MonoBehaviour
                 }
             }
 
-            // Ateşleme mantığı: artık overheat olsa bile ateş etmeye izin veriyoruz
+          // Ateşleme mantığı: artık overheat olsa bile ateş etmeye izin veriyoruz
             if (isHoldingFire && currentAmmo > 0)
             {
+                // **ATEŞ SESİNİ BAŞLAT/DEVAM ETTİR**
+                if (audioSource != null && shootClip != null)
+                {
+                    // Eğer reload sesi çalıyorsa onu durdur
+                    if (audioSource.isPlaying && audioSource.clip == reloadStartClip)
+                    {
+                        audioSource.Stop();
+                    }
+
+                    // Ateş sesi çalmaya başlamadıysa başlat
+                    if (audioSource.clip != shootClip || !audioSource.isPlaying)
+                    {
+                        audioSource.clip = shootClip;
+                        audioSource.loop = true; // Sürekli çalması için loop açıldı
+                        audioSource.Play();
+                    }
+                }
+                
                 // Lazer görünür hale getir
                 if (laserLine != null) laserLine.enabled = true;
 
@@ -185,7 +248,8 @@ public class Weapon : MonoBehaviour
                 fireCooldown -= Time.deltaTime;
                 if (fireCooldown <= 0f)
                 {
-                    Shoot();
+                    // Sadece mermi tüketimini ve raycast'i tetikle
+                    Shoot(); 
                     fireCooldown = 1f / fireRate;
                 }
 
@@ -195,8 +259,14 @@ public class Weapon : MonoBehaviour
                     isOverheated = true;
                 }
             }
-            else
+            else // Ateş tuşu bırakıldı VEYA Mermi bitti
             {
+                // **ATEŞ SESİNİ DURDUR**
+                if (audioSource != null && audioSource.isPlaying && audioSource.clip == shootClip)
+                {
+                    audioSource.Stop();
+                }
+
                 // Lazer kapat
                 if (laserLine != null) laserLine.enabled = false;
 
@@ -215,6 +285,12 @@ public class Weapon : MonoBehaviour
             // Reload sırasında lazer kapalı
             if (laserLine != null) laserLine.enabled = false;
             
+            // Reload sırasında ateş sesini durdur (önlem amaçlı)
+            if (audioSource != null && audioSource.isPlaying && audioSource.clip == shootClip)
+            {
+                audioSource.Stop();
+            }
+            
             // Soğuma devam etsin reload sırasında
             continuousFireTime = Mathf.Max(0f, continuousFireTime - Time.deltaTime);
             if (continuousFireTime < overheatThreshold)
@@ -231,11 +307,26 @@ public class Weapon : MonoBehaviour
 
     void Shoot()
     {
-        if (currentAmmo <= 0) return;
-
+        if (currentAmmo <= 0) 
+        {
+            // Mermi bittiyse sesi durdur (Update'de zaten yapılıyor ama burada da bir kontrol iyi olabilir)
+            if (audioSource != null && audioSource.isPlaying && audioSource.clip == shootClip)
+            {
+                audioSource.Stop();
+            }
+            return;
+        }
+        
         currentAmmo--;
         Debug.Log("Ateş edildi! Kalan mermi: " + currentAmmo);
 
+        // === YENİ: ATEŞ ETME SESİ ===
+        if (audioSource != null && shootClip != null)
+        {
+            audioSource.PlayOneShot(shootClip);
+        }
+        // ==========================
+        
         // Ekranın ortasından bir ray gönder
         Camera cam = mainCamera != null ? mainCamera : Camera.main;
         if (cam == null)
