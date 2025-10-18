@@ -589,7 +589,8 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 422c1c853bb60f842b7ab0e3b18f9918, type: 2}
+      objectReference: {fileID: 3520311589096865797, guid: 4c368cc9eae4b274793711d356b3faa6,
+        type: 3}
     - target: {fileID: -6733177361254619370, guid: 4c368cc9eae4b274793711d356b3faa6,
         type: 3}
       propertyPath: m_StaticEditorFlags
@@ -773,7 +774,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d6902d9da484f46a2fda9ec9bf4b85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyPrefab: {fileID: 6040954465313836709, guid: 383e9ce29083f9646ad44aa218333475,
+  enemyPrefab: {fileID: 2279157184568924228, guid: 9cc495ca03a46ea4b98a94b1c30afa3d,
     type: 3}
   spawnPoints:
   - {fileID: 929271122}

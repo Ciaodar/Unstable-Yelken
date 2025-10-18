@@ -78,6 +78,7 @@ GameObject:
   - component: {fileID: 5899479300876924194}
   - component: {fileID: 4528388446278898512}
   - component: {fileID: 7123252560110261315}
+  - component: {fileID: 1864718270990591547}
   m_Layer: 0
   m_Name: Zombie Idle
   m_TagString: Enemy
@@ -94,7 +95,7 @@ Transform:
   m_GameObject: {fileID: 1507265303933010686}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: -2.8916717, y: 2.67, z: 8.460063}
+  m_LocalPosition: {x: -8.531796, y: 2.44, z: 5.3050084}
   m_LocalScale: {x: 2.5, y: 2.5, z: 2.5}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -115,6 +116,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerTag: Player
+  attackRange: 2
+  attackRate: 1
+  attackDamage: 10
+  damageDelay: 0.5
 --- !u!114 &678750406022450550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -200,6 +205,27 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!95 &1864718270990591547
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1507265303933010686}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: e1d21f4dbdde4f34dbc02ff42d559b2d, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1670422610226389413
 GameObject:
   m_ObjectHideFlags: 0
