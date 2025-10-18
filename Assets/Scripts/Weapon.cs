@@ -13,7 +13,7 @@ public class Weapon : MonoBehaviour
 
     [Header("Unstable Mekaniği")]
     [Tooltip("Şarjör tamamen boşken hassasiyet ne kadar artsın? 1 = Değişmez, 2 = 2 katına çıkar.")]
-    [Range(1f, 10f)]
+    [Range(1f, 50f)]
     public float maxSensitivityMultiplier = 2.5f; // Şarjör boşken hassasiyet bu kadarla çarpılacak.
 
     [Header("Aşırı Isınma")]
