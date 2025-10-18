@@ -1,34 +1,52 @@
 using UnityEngine;
+using UnityEngine.AI; // NavMeshAgent sınıfını kullanmak için gerekli
 
 public class EnemyAI : MonoBehaviour
 {
-    public float speed = 3f; // Düşmanın hareket hızı
-    private Transform player; // Oyuncunun pozisyonunu tutmak için
+    // Hız, ivme, vb. ayarları artık bu bileşen üzerinden kontrol ediliyor.
+    private NavMeshAgent agent; 
+    
+    // Oyuncunun pozisyonunu tutmak için
+    private Transform player; 
+
+    [Header("Ayarlar")]
+    public string playerTag = "Player"; // Oyuncunun tag'i
 
     void Start()
     {
-        // Oyunu bul ve "Player" tag'ine sahip olan objenin Transform'unu al.
-        // BU ADIM ÖNEMLİ! Az sonra oyuncumuza bu tag'i vereceğiz.
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        // 1. NavMeshAgent bileşenini al (Düşman objenizde kurulu olmalı!)
+        agent = GetComponent<NavMeshAgent>();
+
+        // 2. Oyuncuyu bul ve Transform'unu al.
+        GameObject playerObject = GameObject.FindGameObjectWithTag(playerTag);
         if (playerObject != null)
         {
             player = playerObject.transform;
+        }
+        else
+        {
+            Debug.LogError("Sahne üzerinde '" + playerTag + "' tag'ine sahip bir oyuncu bulunamadı. Lütfen oyuncuya bu tag'i verin!");
+        }
+
+        // Eğer agent bileşeni yoksa hata ver (NavMesh kullanmak zorundayız)
+        if (agent == null)
+        {
+            Debug.LogError(gameObject.name + " objesi üzerinde NavMeshAgent bileşeni bulunamadı!");
         }
     }
 
     void Update()
     {
-        // Eğer oyuncu hala hayattaysa ona doğru hareket et
-        if (player != null)
+        // 3. Eğer hem agent hem de oyuncu varsa
+        if (agent != null && player != null)
         {
-            // Yönü hesapla: Hedef - Kendi Pozisyonum
-            Vector3 direction = (player.position - transform.position).normalized;
-
-            // Hızla ve zamanla çarparak pozisyonu güncelle
-            transform.position += direction * speed * Time.deltaTime;
-
-            // Düşmanın sürekli oyuncuya bakmasını sağla (isteğe bağlı)
-            transform.LookAt(player);
+            // NavMesh Agent'a oyuncunun pozisyonunu hedef olarak ver.
+            // Agent, bu hedefe NavMesh (mavi alan) üzerinden engellerden kaçınarak 
+            // en kısa yolu otomatik olarak bulacak ve hareket edecektir.
+            agent.SetDestination(player.position);
+            
+            // Not: LookAt komutuna gerek kalmaz, Agent otomatik olarak hedefe döner.
+            // Ancak, sadece görsel amaçlı daha iyi bir dönüş isterseniz bu kısma ekleyebilirsiniz.
         }
     }
 }
