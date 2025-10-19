@@ -425,6 +425,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1130327184064487512, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: deathScreen
+      value: 
+      objectReference: {fileID: 750666829}
     - target: {fileID: 2605459414961897170, guid: a8ea0e35465ea63479b87dad4df801f2,
         type: 3}
       propertyPath: m_Name
@@ -702,6 +707,18 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
+--- !u!114 &750666829 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3931354396742173817, guid: 8b68f1790bf4c864b8a110179c782b7d,
+    type: 3}
+  m_PrefabInstance: {fileID: 1023768113441258485}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23f316c40a5b49f4287d4c395e182d33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &929271121
 GameObject:
   m_ObjectHideFlags: 0

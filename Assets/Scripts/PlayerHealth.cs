@@ -7,8 +7,11 @@ public class PlayerHealth : MonoBehaviour
     public float maxHealth = 100f;
     private float currentHealth;
     private bool isDead;
+    [SerializeField] private ZombiliedScreen deathScreen;
+    
     // Diğer scriptlerin oyuncunun mevcut canını okuyabilmesi için public readonly property
     public float CurrentHealth { get { return currentHealth; } }
+    
 
     [Header("Rejenere Ayarları")]
     [Tooltip("Hasar aldıktan sonra kaç saniye içinde yenilenmeye başlamaz")] public float regenDelay = 2f;
@@ -55,7 +58,7 @@ public class PlayerHealth : MonoBehaviour
         isDead = true;
         Debug.Log("Oyuncu öldü.");
         // Basit davranış: oyuncuyu pasif hale getir
-        FindObjectOfType<ZombiliedScreen>().Show();
+        deathScreen.Show();
         gameObject.SetActive(false);
         // İsterseniz buraya bir yeniden başlatma veya sahne yükleme ekleyin.
     }
