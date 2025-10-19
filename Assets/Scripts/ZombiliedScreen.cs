@@ -29,6 +29,13 @@ public class ZombiliedScreen : MonoBehaviour
 
     // Public metod: diğer scriptler (ör. PlayerHealth) öldüğünde bu fonksiyonu çağırsın
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q) && videoCanvas.gameObject.activeSelf)
+        {
+            ReturnToMainMenu();
+        }
+    }
 
     private void Start()
     {
