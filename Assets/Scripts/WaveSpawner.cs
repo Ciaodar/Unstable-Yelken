@@ -3,7 +3,8 @@ using UnityEngine;
 
 public class WaveSpawner : MonoBehaviour
 {
-    public static int EnemiesAlive = 0; // Canlı düşman sayısını takip etmek için static değişken
+    public static WaveSpawner instance; //Singleton örneği
+    public int EnemiesAlive = 0; // Canlı düşman sayısını takip etmek için değişken
     [Header("Dalga Ayarları")]
     public Transform enemyPrefab; // Hangi düşmanı spawn edeceğiz?
     public Transform[] spawnPoints; // Nerelerde spawn edeceğiz?
@@ -17,9 +18,18 @@ public class WaveSpawner : MonoBehaviour
 
     void Start()
     {
+        if (instance == null)
+        {
+            instance = this; // Singleton ataması
+        }
+        else
+        {
+            Destroy(gameObject); // İkinci bir örnek varsa yok et
+        }
+        
         // İlk dalga için düşman sayısını belirle
-        enemiesToSpawn = 3; 
-        waveCountdown = 3f; // Oyun başlar başlamaz ilk dalga 3 saniye sonra gelsin.
+        enemiesToSpawn = 5; 
+        waveCountdown = 2f; // Oyun başlar başlamaz ilk dalga 2 saniye sonra gelsin.
     }
 
     void Update()
@@ -76,6 +86,6 @@ public class WaveSpawner : MonoBehaviour
     // Sahnede "Enemy" tag'ine sahip bir obje var mı diye kontrol et.
     bool EnemyIsAlive()
     {
-        return EnemiesAlive > 0;
+        return EnemiesAlive > 0; // Eğer EnemiesAlive sıfırdan büyükse, düşman var demektir.
     }
 }
