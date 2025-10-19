@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Weapon : MonoBehaviour
@@ -39,7 +40,7 @@ public class Weapon : MonoBehaviour
     [Tooltip("Raycast'in etkileyeceği katmanlar")] 
     public LayerMask hitLayers = ~0; // Varsayılan: her şeyi hedefle
     [Tooltip("Silahın rengini değiştirecek renderer'lar")]
-    public Renderer[] weaponRenderers;
+    public List<Renderer> weaponRenderers;
     [Tooltip("Isınma renginin dolum ölçeği (1 = overheatThreshold'ta tam geçiş)" )]
     public float heatColorScale = 1.5f;
     [Tooltip("Şarjör BlendShape'lerini içeren SkinnedMeshRenderer")]
@@ -114,6 +115,7 @@ public class Weapon : MonoBehaviour
              if (laserLine == null)
              {
                  laserLine = gameObject.AddComponent<LineRenderer>();
+                 weaponRenderers.Add(laserLine);
                  // Basit görsel ayarlar (daha sonra düzenleyin)
                  laserLine.startWidth = 0.02f;
                  laserLine.endWidth = 0.02f;
@@ -373,7 +375,7 @@ public class Weapon : MonoBehaviour
     // Silahın ısınma düzeyine göre renderer'ların rengini değiştirir.
     void UpdateWeaponHeatVisual()
     {
-        if (weaponRenderers == null || weaponRenderers.Length == 0) return;
+        if (weaponRenderers == null || weaponRenderers.Count == 0) return;
 
         // Normalize edilmiş ısı değeri
         float t = Mathf.Clamp01(continuousFireTime / (overheatThreshold * heatColorScale));
