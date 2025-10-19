@@ -14,7 +14,6 @@ public class EnemyHealth : MonoBehaviour
     public void TakeDamage(float amount)
     {
         currentHealth -= amount;
-        Debug.Log(gameObject.name + " hasar aldı: " + amount + " kalan: " + currentHealth);
         if (currentHealth <= 0f)
         {
             Die();
@@ -23,11 +22,19 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
-        Debug.Log(gameObject.name + " öldühttp.");
-        WaveSpawner.instance.EnemiesAlive--; // Düşman öldüğünde canlı düşman sayısını azalt
-        // Ölme efekti/animasyon eklemek istersen burada yap.
-        
+        // 1. PUAN EKLE
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddScoreForKill();
+        }
+
+        // 2. CANLI DÜŞMAN SAYISINI AZALT
+        if (WaveSpawner.instance != null)
+        {
+            WaveSpawner.instance.EnemiesAlive--; 
+        }
+
+        // 3. Düşmanı yok et
         Destroy(gameObject);
     }
 }
-
