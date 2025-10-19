@@ -3,9 +3,11 @@ using UnityEngine;
 
 public class WaveSpawner : MonoBehaviour
 {
+    public static int EnemiesAlive = 0; // Canlı düşman sayısını takip etmek için static değişken
     [Header("Dalga Ayarları")]
     public Transform enemyPrefab; // Hangi düşmanı spawn edeceğiz?
     public Transform[] spawnPoints; // Nerelerde spawn edeceğiz?
+    public int maxEnemyNumber = 15; // Maksimum canlı düşman sayısı
 
     public float timeBetweenWaves = 5f; // Dalgalar arası bekleme süresi
     private float waveCountdown; // Bir sonraki dalga için geri sayım
@@ -44,16 +46,20 @@ public class WaveSpawner : MonoBehaviour
     {
         Debug.Log("Dalga Başlıyor: " + waveNumber);
 
-        for (int i = 0; i < enemiesToSpawn; i++)
+        for (int i = 0; i < enemiesToSpawn;)
         {
-            SpawnEnemy();
-            // Düşmanları ardı ardına değil, 1 saniye arayla spawn et
-            yield return new WaitForSeconds(1f); 
+            if (EnemiesAlive< maxEnemyNumber)
+            {
+                i++;
+                SpawnEnemy();
+                // Düşmanları ardı ardına değil, 1 saniye arayla spawn et
+                yield return new WaitForSeconds(1f); 
+            }
         }
 
         // Dalga bitti, bir sonraki dalgayı zorlaştır.
         waveNumber++;
-        enemiesToSpawn += 2; // Her yeni dalgada 2 düşman daha fazla gelsin.
+        enemiesToSpawn = (int)(enemiesToSpawn*Random.Range(0.8f, 1.9f));
     }
 
     void SpawnEnemy()
@@ -64,15 +70,12 @@ public class WaveSpawner : MonoBehaviour
         // Düşmanı o noktada yarat
         Instantiate(enemyPrefab, randomSpawnPoint.position, randomSpawnPoint.rotation);
         Debug.Log("Bir düşman spawn oldu!");
+        EnemiesAlive++; // Yeni bir düşman spawn olduğunda sayacı artır
     }
 
     // Sahnede "Enemy" tag'ine sahip bir obje var mı diye kontrol et.
     bool EnemyIsAlive()
     {
-        if (GameObject.FindGameObjectWithTag("Enemy"))
-        {
-            return true;
-        }
-        return false;
+        return EnemiesAlive > 0;
     }
 }

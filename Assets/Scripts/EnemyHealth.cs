@@ -23,6 +23,8 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
+        Debug.Log(gameObject.name + " öldü.");
+        WaveSpawner.EnemiesAlive--; // Düşman öldüğünde canlı düşman sayısını azalt
         // Ölme efekti/animasyon eklemek istersen burada yap.
         Destroy(gameObject);
     }

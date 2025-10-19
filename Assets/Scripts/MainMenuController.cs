@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,7 +14,16 @@ public class MainMenuController : MonoBehaviour
     {
         ShowMainMenu();
     }
-    
+
+    private void Update()
+    {
+        // Escape tuşuna basıldığında ana menüye dön
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ShowMainMenu();
+        }
+    }
+
     public void StartGame()
     {
         Debug.Log("Oyun başlatılıyor...");

@@ -7,27 +7,64 @@ using UnityEngine.UI;
 // - Hasar alındığında kısa bir pulse ekler, daha sonra yumuşakça hedef health-based alpha'ya döner.
 public class DamageOverlay : MonoBehaviour
 {
-    public Image overlayImage; // fullscreen Image (vein sprite)
+    public SpriteRenderer overlaySprite; // kameranın önündeki sprite
+
+    [Header("Alpha / Scale Ayarları")]
     public float fadeSpeed = 3f; // hedefe yumuşak yaklaşma hızı
-    public float pulseMultiplier = 1.0f; // hasarın alpha'ya çevirme katsayısı (hasar / maxHealth * pulseMultiplier)
+    public float scaleMax = 0.06f; // alpha=0 iken scale
+    public float scaleMin = 0.03f; // alpha=1 iken scale
+    public float scaleSmoothSpeed = 4f; // scale yumuşatma
+
+    // maksimum _Alpha değeri (0 .. maxAlpha)
+    public float maxAlpha = 1.5f;
+
+    [Header("Pulse Ayarları")]
+    [Tooltip("İki pulse arasında izin verilen minimum süre (saniye). Sürekli hasarda jitteri azaltmak için")]
+    public float minPulseInterval = 0.15f;
+    [Tooltip("Hasarın alpha'a dönüştürme katsayısı")]
+    public float pulseMultiplier = 1.0f;
+    [Tooltip("Hasarın scale'e eklediği miktar")]
+    public float pulseScaleAmount = 0.02f;
+    [Tooltip("Pulse'un sönme hızı")]
+    public float pulseDecayRate = 3f;
+
+    // önceki base alpha (0..1) takip için
+    private float _prevBaseAlphaNorm = 0f;
 
     private PlayerHealth playerHealth;
     private float currentAlpha = 0f;
-    private float pulseAlpha = 0f; // hasar pulse'unun katkısı
+    private float currentScale = 0.06f;
+    private float targetScale = 0.06f;
+    private float pulseAlpha = 0f; // pulse katkısı (0..1)
+    private float pulseScale = 0f;
+    private float _bufferedDamage = 0f;
+    private float _lastPulseTime = -999f;
+
+    private Material spriteMaterialInstance;
 
     void Start()
     {
-        if (overlayImage == null)
+        if (overlaySprite == null)
         {
-            Debug.LogWarning("DamageOverlay: overlayImage atanmamış.");
+            Debug.LogWarning("DamageOverlay: overlaySprite atanmamış.");
             enabled = false;
             return;
         }
 
-        // Başlangıçta görünmez
-        var c = overlayImage.color;
-        c.a = 0f;
-        overlayImage.color = c;
+        if (overlaySprite != null)
+        {
+            var sc = overlaySprite.color;
+            sc.a = 0f;
+            overlaySprite.color = sc;
+            if (overlaySprite.material != null)
+            {
+                spriteMaterialInstance = new Material(overlaySprite.material);
+                overlaySprite.material = spriteMaterialInstance;
+            }
+            // başlangıç scale
+            currentScale = scaleMax;
+            if (overlaySprite.transform != null) overlaySprite.transform.localScale = Vector3.one * currentScale;
+        }
 
         // PlayerHealth'i bul (Player tag'li obje)
         var p = GameObject.FindGameObjectWithTag("Player");
@@ -40,12 +77,6 @@ public class DamageOverlay : MonoBehaviour
         {
             Debug.LogWarning("DamageOverlay: PlayerHealth bulunamadı. Player objesine 'Player' tag'i verin veya script'e PlayerHealth referansı atayın.");
         }
-
-        // Eğer özel bir materyal ile Shader Graph kullanacaksanız, Image'in materyalini instancela
-        if (overlayImage.material != null)
-        {
-            overlayImage.material = new Material(overlayImage.material);
-        }
     }
 
     void OnDestroy()
@@ -56,16 +87,12 @@ public class DamageOverlay : MonoBehaviour
     void OnDamage(float amount)
     {
         if (playerHealth == null || playerHealth.maxHealth <= 0f) return;
-
-        // Pulse miktarı: hasarın maxHealth'e oranı * multiplier
-        float add = (amount / playerHealth.maxHealth) * pulseMultiplier;
-        pulseAlpha = Mathf.Clamp01(pulseAlpha + add);
+        // Hasarı buffer'la, Update'te belirli aralıklarla işle
+        _bufferedDamage += amount;
     }
 
     void Update()
     {
-        if (overlayImage == null) return;
-
         // Baz alpha: health'e göre (100 -> 0, 0 -> 1)
         float baseAlpha = 1f;
         if (playerHealth != null && playerHealth.maxHealth > 0f)
@@ -73,27 +100,87 @@ public class DamageOverlay : MonoBehaviour
             baseAlpha = 1f - (playerHealth.CurrentHealth / playerHealth.maxHealth);
         }
 
-        // Pulse alpha yavaşça azalır
-        pulseAlpha = Mathf.Lerp(pulseAlpha, 0f, Time.deltaTime * (fadeSpeed * 1.5f));
+        // normalize base alpha 0..1
+        float baseAlphaNorm = Mathf.Clamp01(baseAlpha);
+        // önceki base alpha'yı local olarak sakla (karşılaştırmalar için)
+        float prevBaseAlpha = _prevBaseAlphaNorm;
+        // scaled base alpha for _Alpha property (0..maxAlpha)
+        float baseAlphaScaled = baseAlphaNorm * maxAlpha;
 
-        // Hedef alpha = baseAlpha + pulseAlpha
-        float targetAlpha = Mathf.Clamp01(baseAlpha + pulseAlpha);
-
-        // Yumuşak geçiş
-        currentAlpha = Mathf.Lerp(currentAlpha, targetAlpha, Time.deltaTime * fadeSpeed);
-
-        // Shader Graph veya normal Image renk ile uygulama
-        var mat = overlayImage.material;
-        if (mat != null && mat.HasProperty("_Alpha"))
+        // Apply base alpha: if baseAlpha increased (health dropped) apply immediately; if decreased, smooth it
+        float appliedBaseAlphaScaled;
+        if (baseAlphaNorm >= prevBaseAlpha)
         {
-            mat.SetFloat("_Alpha", currentAlpha);
+            // health decreased -> alpha increased: immediate
+            appliedBaseAlphaScaled = baseAlphaScaled;
         }
         else
         {
-            Color c = overlayImage.color;
-            c.a = currentAlpha;
-            overlayImage.color = c;
+            // health increased -> alpha decreased: smooth the decrease
+            float prevScaled = prevBaseAlpha * maxAlpha;
+            appliedBaseAlphaScaled = Mathf.Lerp(prevScaled, baseAlphaScaled, Time.deltaTime * fadeSpeed);
         }
+
+        // Eğer bufferedDamage doluysa ve minPulseInterval geçtiyse, pulse'u tetikle
+        if (_bufferedDamage > 0f && Time.time - _lastPulseTime >= minPulseInterval && playerHealth != null && playerHealth.maxHealth > 0f)
+        {
+            float dmg = _bufferedDamage;
+            _bufferedDamage = 0f;
+            _lastPulseTime = Time.time;
+
+            float add = (dmg / playerHealth.maxHealth) * pulseMultiplier;
+            pulseAlpha = Mathf.Clamp01(pulseAlpha + add);
+            pulseScale += (dmg / playerHealth.maxHealth) * pulseScaleAmount;
+            // pulseScale clamp so it doesn't push below scaleMin
+            pulseScale = Mathf.Clamp(pulseScale, 0f, scaleMax - scaleMin);
+        }
+
+        // Pulse alpha yavaşça azalır (kontrollü)
+        pulseAlpha = Mathf.Lerp(pulseAlpha, 0f, Time.deltaTime * pulseDecayRate);
+
+        // Hedef alpha = applied base scaled + pulse katkısı (pulse 0..1 mapped to maxAlpha)
+        float targetAlpha = appliedBaseAlphaScaled + (pulseAlpha * maxAlpha);
+        targetAlpha = Mathf.Clamp(targetAlpha, 0f, maxAlpha);
+
+        // Apply immediately (no extra smoothing on combined value)
+        currentAlpha = targetAlpha;
+        if (overlaySprite != null)
+        {
+            if (spriteMaterialInstance != null && spriteMaterialInstance.HasProperty("_Alpha")) spriteMaterialInstance.SetFloat("_Alpha", currentAlpha);
+            else
+            {
+                Color sc = overlaySprite.color;
+                sc.a = currentAlpha;
+                overlaySprite.color = sc;
+            }
+        }
+
+        // Scale hedefi health'e göre: alpha=0 -> scaleMax, alpha=1 -> scaleMin
+        targetScale = Mathf.Lerp(scaleMax, scaleMin, baseAlphaNorm);
+        // Apply pulseScale (pulse reduces scale)
+        float pulseAdjustedScale = targetScale - pulseScale;
+        // Ensure scale does not go below scaleMin
+        pulseAdjustedScale = Mathf.Clamp(pulseAdjustedScale, scaleMin, scaleMax);
+        // If baseAlpha increased (health dropped) we want immediate scale decrease, else smooth increase
+        if (baseAlphaNorm >= prevBaseAlpha)
+        {
+            // immediate (scale may decrease)
+            currentScale = pulseAdjustedScale;
+        }
+        else
+        {
+            // smooth
+            currentScale = Mathf.Lerp(currentScale, pulseAdjustedScale, Time.deltaTime * scaleSmoothSpeed);
+        }
+        // pulseScale yavaşça azalır
+        pulseScale = Mathf.Lerp(pulseScale, 0f, Time.deltaTime * pulseDecayRate);
+
+        if (overlaySprite != null && overlaySprite.transform != null)
+        {
+            overlaySprite.transform.localScale = Vector3.one * currentScale;
+        }
+
+        // şimdi önceki base alpha değerini güncelle
+        _prevBaseAlphaNorm = baseAlphaNorm;
     }
 }
-

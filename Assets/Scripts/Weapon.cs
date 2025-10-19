@@ -30,6 +30,8 @@ public class Weapon : MonoBehaviour
     public float overheatThreshold = 3f;
     [Tooltip("Aşırı ısınma sırasında oyuncuya saniyede verilen hasar")]
     public float overheatDamagePerSecond = 10f;
+    [Tooltip("Aşırı ısınma hasarının uygulanma aralığı (saniye)")]
+    public float overheatTickInterval = 0.5f;
 
     [Header("Görsel Referanslar")]
     public Transform muzzleTransform; // Silahın ucu (lazer başlangıç noktası)
@@ -57,6 +59,7 @@ public class Weapon : MonoBehaviour
     private float fireCooldown = 0f;
     private float continuousFireTime = 0f;
     private bool isOverheated = false;
+    private float _lastOverheatTick = -999f;
 
     private PlayerHealth playerHealth;
     private Camera mainCamera;
@@ -69,6 +72,8 @@ public class Weapon : MonoBehaviour
 
     // Reload durumu
     private bool _isReloading = false;
+    // Diğer component'lerin reload durumunu okuyabilmesi için public getter
+    public bool IsReloading { get { return _isReloading; } }
     private Vector3 _weaponOriginalLocalPosition;
     private float _targetWeaponYPosition;
     private float _currentWeaponYPosition;
@@ -207,13 +212,15 @@ public class Weapon : MonoBehaviour
             // Aşırı ısınma zararını uygula (sadece threshold aşıldıktan sonra) -- continuousFireTime ile doğru orantılı
             if (isHoldingFire && continuousFireTime > overheatThreshold)
             {
-                if (playerHealth != null)
+                if (playerHealth != null && Time.time - _lastOverheatTick >= overheatTickInterval)
                 {
+                    _lastOverheatTick = Time.time;
                     // Overheat hasarı continuousFireTime ile üstel olarak artar
                     float overheatRatio = (continuousFireTime - overheatThreshold) / overheatThreshold;
                     float damageMultiplier = 1f + (overheatRatio * overheatRatio * 2f); // Üstel artış
-                    float damageThisFrame = overheatDamagePerSecond * damageMultiplier * Time.deltaTime;
-                    playerHealth.TakeDamage(damageThisFrame);
+                    // overheatDamagePerSecond is per-second, apply for the tick interval
+                    float damageThisTick = overheatDamagePerSecond * damageMultiplier * overheatTickInterval;
+                    playerHealth.TakeDamage(damageThisTick);
                 }
             }
 

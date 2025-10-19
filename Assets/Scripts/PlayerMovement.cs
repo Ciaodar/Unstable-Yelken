@@ -8,6 +8,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Hareket Ayarları")]
     public float speed = 12f; // Karakterin yürüme hızı
     public float gravity = -9.81f; // Yer çekimi kuvveti
+    public float reloadSpeedMultiplier = 1.0f; // Hareket hızı çarpanı
 
     [Header("Ölüm Ayarları")]
     [Tooltip("Karakterin altındaki ölüm seviyesi (Y koordinatı)")]
@@ -17,6 +18,7 @@ public class PlayerMovement : MonoBehaviour
     private PlayerHealth playerHealth; // PlayerHealth script'ine referans
     private Vector3 velocity; // Yer çekiminden kaynaklanan dikey hız
     private FootstepManager footstepManager;
+    private Weapon weapon;
 
     [Header("Kafa Sallanması (Head Bob) Ayarları")]
     public bool enableHeadBob = true;
@@ -33,6 +35,7 @@ public class PlayerMovement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         playerHealth = GetComponent<PlayerHealth>(); 
         footstepManager = GetComponent<FootstepManager>();
+        weapon = FindObjectOfType<Weapon>();
 
         if (playerHealth == null)
         {
@@ -70,7 +73,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 move = transform.right * x + transform.forward * z;
 
         // Hareket vektörünü hızla ve zamanla çarparak uygula
-        controller.Move(move * speed * Time.deltaTime);
+        controller.Move(move * (speed * Time.deltaTime * (weapon.IsReloading?reloadSpeedMultiplier:1f)));
 
         // Yer çekimini uygula
         velocity.y += gravity * Time.deltaTime;
