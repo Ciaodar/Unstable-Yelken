@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,8 +11,11 @@ public class ZombiliedScreen : MonoBehaviour
     [SerializeField]private List<GameObject> destroyList;
     public Image firstImage;   // önce görünecek image
     public Image secondImage;  // sonra görünecek image
-    public GameObject actionButton; // 2 saniye sonra aktif olacak buton (ör: Retry / MainMenu)
+    public GameObject actionButton; // 2 saniye sonra aktif olacak kısım 
 
+    [Header("Güncellenecek Yazılar")]
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI timeText;
     Coroutine _running;
 
     // Public metod: diğer scriptler (ör. PlayerHealth) öldüğünde bu fonksiyonu çağırsın
@@ -27,6 +31,7 @@ public class ZombiliedScreen : MonoBehaviour
 
     public void Show()
     {
+        gameObject.SetActive(true);
         //Mouse cursorunu göster
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -36,6 +41,10 @@ public class ZombiliedScreen : MonoBehaviour
         {
             Destroy(obj);
         }
+        
+        // Skor ve süre iletisini yerleştir
+        scoreText.text = GameManager.Instance.currentScore.ToString();
+        timeText.text = TimeSpan.FromSeconds(GameManager.Instance.timeSurvived).ToString(@"mm\:ss");
         
         // Eğer zaten oynuyorsa yenisini başlatma
         if (_running != null) StopCoroutine(_running);
