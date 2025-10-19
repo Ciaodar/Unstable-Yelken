@@ -43,6 +43,26 @@ public class ZombiliedScreen : MonoBehaviour
         SetImageAlpha(firstImage, 0f);
         SetImageAlpha(secondImage, 0f);
         if (actionButton != null) actionButton.SetActive(false);// butonu gizle
+        
+        // Video bittiğinde çalışacak metodu (OnVideoFinished) dinlemeye başla
+        if (videoPlayer != null)
+        {
+            videoPlayer.loopPointReached += OnVideoFinished;
+        }
+    }
+    private void OnDestroy()
+    {
+        // Script yok edildiğinde dinlemeyi bırak, hata almamak için önemlidir
+        if (videoPlayer != null)
+        {
+            videoPlayer.loopPointReached -= OnVideoFinished;
+        }
+    }
+
+    private void OnVideoFinished(VideoPlayer vp)
+    {
+        Debug.Log("Outro video bitti, ana menüye dönülüyor.");
+        ReturnToMainMenu();
     }
     
     public void ReturnToOutro()

@@ -117,8 +117,8 @@ public class Weapon : MonoBehaviour
                  laserLine = gameObject.AddComponent<LineRenderer>();
                  weaponRenderers.Add(laserLine);
                  // Basit görsel ayarlar (daha sonra düzenleyin)
-                 laserLine.startWidth = 0.02f;
-                 laserLine.endWidth = 0.02f;
+                 laserLine.startWidth = 0.08f;
+                 laserLine.endWidth = 0.15f;
                  laserLine.positionCount = 2;
                 laserLine.useWorldSpace = true;
              }
