@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public class ZombiliedScreen : MonoBehaviour
 {
+    public static bool isOutroWatched = false;
     [Header("Kaybetme Ekranı Objeleri")]
     [SerializeField]private List<GameObject> destroyList;
     public Image firstImage;   // önce görünecek image
@@ -16,6 +18,13 @@ public class ZombiliedScreen : MonoBehaviour
     [Header("Güncellenecek Yazılar")]
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI timeText;
+    
+    [Header("Outro Video Ayarları")]
+    // Video'nun oynatılacağı RawImage veya Canvas nesnesini buraya atayın
+    public GameObject videoCanvas; 
+    public VideoPlayer videoPlayer;
+
+    
     Coroutine _running;
 
     // Public metod: diğer scriptler (ör. PlayerHealth) öldüğünde bu fonksiyonu çağırsın
@@ -28,6 +37,44 @@ public class ZombiliedScreen : MonoBehaviour
         SetImageAlpha(secondImage, 0f);
         if (actionButton != null) actionButton.SetActive(false);// butonu gizle
     }
+    
+    public void ReturnToOutro()
+    {
+        //outro izlendi mi kontrol et
+        if (isOutroWatched)
+        {
+            ReturnToMainMenu();
+            return;
+        }
+        isOutroWatched = true;
+        
+        //videoyu oynat
+        Debug.Log("Intro ilk kez izleniyor, video oynatılıyor.");
+        
+        // Ana menüyü kapat ve video ekranını aç
+        firstImage.gameObject.SetActive(false);
+        secondImage.gameObject.SetActive(false);
+        actionButton.SetActive(false);
+        
+        
+        if (videoCanvas != null && videoPlayer != null)
+        {
+            videoCanvas.SetActive(true);
+            videoPlayer.Play();
+        }
+        else
+        {
+            Debug.LogError("Video Canvas veya Video Player atanmamış. Doğrudan oyun başlatılıyor.");
+            
+        }
+    }
+
+    public void ReturnToMainMenu()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+    }
+    
+    
 
     public void Show()
     {

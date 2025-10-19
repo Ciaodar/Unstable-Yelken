@@ -7,6 +7,7 @@ using UnityEngine.Video; // Video işlemlerini kullanmak için ekleyin
 
 public class MainMenuController : MonoBehaviour
 {
+    public static bool isIntroWatched = false; // Intro izlenme durumu
     // === Menü Objesi Değişkenleri ===
     public GameObject mainMenu;
     public GameObject settingsMenu;
@@ -48,45 +49,45 @@ public class MainMenuController : MonoBehaviour
         {
             ShowMainMenu();
         }
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            // Enter tuşuna basıldığında oyunu başlat
+            StartGameScene();
+        }
+        if (Input.GetKeyDown(KeyCode.Q) && videoCanvas.gameObject.activeSelf)
+        {
+            StartGameScene();
+        }
     }
 
     // === BUTON FONKSİYONLARI ===
 
     public void StartGame()
     {
-        // PlayerPrefs'ten Intro'nun izlenip izlenmediğini kontrol et
-        // 0: İzlenmedi (Varsayılan), 1: İzlendi
-        bool introWatched = PlayerPrefs.GetInt(IntroWatchedKey, 0) == 1;
-
-        if (introWatched)
+        // Intro'nun daha önce izlenip izlenmediğini kontrol et
+        if (isIntroWatched)
         {
-            // Intro izlenmişse, doğrudan oyunu başlat
-            Debug.Log("Intro daha önce izlenmiş, doğrudan oyun başlatılıyor.");
             StartGameScene();
+            return;
+        }
+        isIntroWatched = true;
+        //videoyu oynat
+        Debug.Log("Intro ilk kez izleniyor, video oynatılıyor.");
+        
+        // Ana menüyü kapat ve video ekranını aç
+        mainMenu.SetActive(false); 
+        
+        if (videoCanvas != null && videoPlayer != null)
+        {
+            videoCanvas.SetActive(true);
+            videoPlayer.Play();
         }
         else
         {
-            // Intro izlenmemişse, videoyu oynat
-            Debug.Log("Intro ilk kez izleniyor, video oynatılıyor.");
-            
-            // Ana menüyü kapat ve video ekranını aç
-            mainMenu.SetActive(false); 
-            
-            if (videoCanvas != null && videoPlayer != null)
-            {
-                videoCanvas.SetActive(true);
-                videoPlayer.Play();
-                
-                // İzlenme durumunu kaydet
-                PlayerPrefs.SetInt(IntroWatchedKey, 1);
-                PlayerPrefs.Save();
-            }
-            else
-            {
-                Debug.LogError("Video Canvas veya Video Player atanmamış. Doğrudan oyun başlatılıyor.");
-                StartGameScene();
-            }
+            Debug.LogError("Video Canvas veya Video Player atanmamış. Doğrudan oyun başlatılıyor.");
+            StartGameScene();
         }
+        
     }
     
     // Video bittiğinde (loopPointReached) otomatik olarak çalışacak metot
