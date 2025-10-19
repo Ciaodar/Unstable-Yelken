@@ -11,7 +11,7 @@ public class WaveSpawner : MonoBehaviour
     public int currentWave = 1; // Mevcut dalga numarası
     
     [Header("Dalga Ayarları")]
-    public Transform enemyPrefab; // Hangi düşmanı spawn edeceğiz?
+    public Transform[] enemyPrefabs; // Hangi düşmanı spawn edeceğiz?
     public Transform[] spawnPoints; // Nerelerde spawn edeceğiz?
     public int maxEnemyNumber = 15; // Maksimum canlı düşman sayısı
 
@@ -85,13 +85,26 @@ public class WaveSpawner : MonoBehaviour
 
     void SpawnEnemy()
     {
+        // Kontrol: Düşman prefab listesi boş mu?
+        if (enemyPrefabs.Length == 0)
+        {
+            Debug.LogError("Düşman Prefab listesi (enemyPrefabs) boş! Lütfen en az bir düşman ekleyin.");
+            return;
+        }
+        
+        // 1. Rastgele bir düşman prefabı seç
+        // Random.Range(int min, int max) metodunda max değeri hariç tutulur, bu yüzden uzunluk doğru aralığı verir.
+        Transform selectedEnemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+
+        // 2. Rastgele bir spawn noktası seç
         Transform randomSpawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-        Instantiate(enemyPrefab, randomSpawnPoint.position, randomSpawnPoint.rotation);
+
+        // 3. Seçilen düşmanı yarat
+        Instantiate(selectedEnemyPrefab, randomSpawnPoint.position, randomSpawnPoint.rotation);
         
         EnemiesAlive++; // Yeni bir düşman spawn olduğunda sayacı artır
         Debug.Log($"Bir düşman spawn oldu! Toplam canlı: {EnemiesAlive}");
     }
-
     bool EnemyIsAlive()
     {
         return EnemiesAlive > 0;

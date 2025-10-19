@@ -822,8 +822,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EnemiesAlive: 0
-  enemyPrefab: {fileID: 2279157184568924228, guid: 9cc495ca03a46ea4b98a94b1c30afa3d,
-    type: 3}
+  currentWave: 1
+  enemyPrefabs:
+  - {fileID: 2279157184568924228, guid: 9cc495ca03a46ea4b98a94b1c30afa3d, type: 3}
+  - {fileID: 8466930849250804863, guid: 399a76d421274b24fba9d595143dcb87, type: 3}
   spawnPoints:
   - {fileID: 929271122}
   - {fileID: 965251504}

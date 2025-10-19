@@ -233,6 +233,7 @@ MonoBehaviour:
   speed: 12
   gravity: -9.81
   reloadSpeedMultiplier: 1
+  jumpHeight: 4
   deathYLevel: -20
   enableHeadBob: 1
   bobFrequency: 5.06
