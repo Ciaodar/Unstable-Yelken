@@ -6,6 +6,7 @@ public class PlayerHealth : MonoBehaviour
 {
     public float maxHealth = 100f;
     private float currentHealth;
+    private bool isDead;
     // Diğer scriptlerin oyuncunun mevcut canını okuyabilmesi için public readonly property
     public float CurrentHealth { get { return currentHealth; } }
 
@@ -50,8 +51,11 @@ public class PlayerHealth : MonoBehaviour
 
     void Die()
     {
+        if (isDead) return; // Zaten öldüyse tekrar ölme
+        isDead = true;
         Debug.Log("Oyuncu öldü.");
         // Basit davranış: oyuncuyu pasif hale getir
+        FindObjectOfType<ZombiliedScreen>().Show();
         gameObject.SetActive(false);
         // İsterseniz buraya bir yeniden başlatma veya sahne yükleme ekleyin.
     }

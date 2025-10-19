@@ -63,8 +63,9 @@ public class WaveSpawner : MonoBehaviour
                 i++;
                 SpawnEnemy();
                 // Düşmanları ardı ardına değil, 1 saniye arayla spawn et
-                yield return new WaitForSeconds(1f); 
+                
             }
+            yield return new WaitForSeconds(1f); 
         }
 
         // Dalga bitti, bir sonraki dalgayı zorlaştır.
