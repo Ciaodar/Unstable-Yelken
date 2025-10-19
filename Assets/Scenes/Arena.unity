@@ -435,6 +435,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 2669105228517183898, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: Loop
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2669105228517183898, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: m_Volume
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2669105228517183898, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: aa4942f9aedf5454e8683309f1c6dfd2, type: 3}
+    - target: {fileID: 2669105228517183898, guid: a8ea0e35465ea63479b87dad4df801f2,
+        type: 3}
+      propertyPath: m_PlayOnAwake
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5483421134531667186, guid: a8ea0e35465ea63479b87dad4df801f2,
         type: 3}
       propertyPath: reloadSpeedMultiplier
@@ -610,7 +630,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 3520311589096865797, guid: 4c368cc9eae4b274793711d356b3faa6,
+      objectReference: {fileID: -6478536213147159724, guid: 4c368cc9eae4b274793711d356b3faa6,
         type: 3}
     - target: {fileID: -6733177361254619370, guid: 4c368cc9eae4b274793711d356b3faa6,
         type: 3}
@@ -632,6 +652,11 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 8442510506162454399, guid: 4c368cc9eae4b274793711d356b3faa6,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 2d4eb4632ff89504084de124ceedf2e4, type: 2}
     - target: {fileID: 8513859187771203891, guid: 4c368cc9eae4b274793711d356b3faa6,
         type: 3}
       propertyPath: m_StaticEditorFlags
